@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Scent Odyssey - The Perfume Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fredoka+One&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #090a16;
+            color: #ffffff;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .font-heading {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Starfield background canvas */
+        #space-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Floating animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.6)); }
+            50% { filter: drop-shadow(0 0 30px rgba(236, 72, 153, 0.9)); }
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .animate-astronaut {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .animate-glow {
+            animation: pulse-glow 3s infinite;
+        }
+
+        .animate-bounce-gentle {
+            animation: bounce-gentle 2s ease-in-out infinite;
+        }
+
+        /* Glassmorphism styling */
+        .glass-card {
+            background: rgba(22, 24, 49, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-btn:hover:not(:disabled) {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: rgba(236, 72, 153, 0.6);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.3);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090a16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b0764;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 md:p-6 relative">
+
+    <canvas id="space-canvas"></canvas>
+
+    <!-- Main Game Frame -->
+    <div class="relative z-10 w-full max-w-2xl mx-auto">
+        
+        <!-- Top Status Bar -->
+        <header id="status-bar" class="hidden mb-4 glass-card rounded-2xl p-4 flex items-center justify-between border-b border-purple-500/30">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid me-0 fa-user-astronaut text-xl text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-xs font-semibold text-purple-300 uppercase tracking-widest">Explorer</h2>
+                    <p class="text-sm font-bold text-white flex items-center gap-1">
+                        Astro-Nose <span id="rank-badge" class="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full border border-pink-500/30">Cadet</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- Scent Shards / Score -->
+                <div class="text-right">
+                    <span class="text-xs text-purple-300 block">Scent Crystals</span>
+                    <div class="flex items-center justify-end space-x-1 text-amber-400 font-bold text-lg">
+                        <i class="fa-solid fa-gem animate-pulse"></i>
+                        <span id="score-text">0</span>
+                        <span id="total-score-text" class="text-xs text-purple-400">/ 8</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Screen Container -->
+        <main id="app-viewport" class="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden transition-all duration-300">
+            
+            <!-- ================= SCREEN 1: WELCOME INTRO ================= -->
+            <section id="screen-intro" class="text-center space-y-6">
+                <!-- Floating Astronaut SVG Illustration -->
+                <div class="relative w-40 h-40 mx-auto animate-astronaut animate-glow">
+                    <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-2xl">
+                        <!-- Space Helmet Bubble -->
+                        <circle cx="100" cy="95" r="55" fill="url(#helmetGrad)" stroke="#a855f7" stroke-width="4"/>
+                        <!-- Visor Reflection -->
+                        <path d="M 65 80 Q 100 60 135 80 Q 125 120 65 80" fill="rgba(236, 72, 153, 0.35)"/>
+                        <!-- Cute Eyes -->
+                        <circle cx="85" cy="95" r="7" fill="#ffffff"/>
+                        <circle cx="115" cy="95" r="7" fill="#ffffff"/>
+                        <circle cx="87" cy="93" r="2.5" fill="#090a16"/>
+                        <circle cx="117" cy="93" r="2.5" fill="#090a16"/>
+                        <path d="M 92 106 Q 100 112 108 106" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <!-- Space Suit Body -->
+                        <path d="M 60 145 C 60 120, 140 120, 140 145 L 145 180 C 145 190, 55 190, 55 180 Z" fill="#e2e8f0"/>
+                        <!-- Perfume Bottle Patch on Chest -->
+                        <rect x="90" y="145" width="20" height="25" rx="4" fill="#ec4899"/>
+                        <rect x="95" y="139" width="10" height="6" fill="#f43f5e"/>
+                        <!-- Glowing Star near hands -->
+                        <circle cx="150" cy="110" r="12" fill="#fbbf24" class="animate-pulse"/>
+                        
+                        <defs>
+                            <radialGradient id="helmetGrad" cx="30%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#312e81"/>
+                                <stop offset="100%" stop-color="#0f172a"/>
+                            </radialGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <div>
+                    <span class="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-semibold tracking-wider uppercase border border-purple-500/40 mb-2">
+                        🚀 Interactive Olfactory Quest
+                    </span>
+                    <h1 class="text-3xl md:text-5xl font-extrabold font-heading text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-400 to-amber-300 drop-shadow-sm">
+                        Cosmic Scent Odyssey
+                    </h1>
+                    <p class="text-purple-200/80 text-sm md:text-base max-w-md mx-auto mt-3 leading-relaxed">
+                        Join <span class="text-pink-300 font-semibold">Astro-Nose</span> on a journey across 8 scented planets! Answer the fragrance puzzles to synthesize the legendary <span class="text-amber-300 font-semibold">Star Perfume</span> & unlock a secret voucher!
+                    </p>
+                </div>
+
+                <!-- Prize Callout Card -->
+                <div class="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-4 text-left max-w-md mx-auto space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-gift animate-bounce-gentle"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-purple-300 font-semibold uppercase">Grand Reward</div>
+                                <div class="text-sm font-bold text-white">100% Score (8/8) = 5% Discount Voucher</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/30">
+                            FREE
+                        </span>
+                    </div>
+
+                    <!-- Terms Summary -->
+                    <div class="border-t border-purple-500/20 pt-2.5 text-[11px] text-purple-200/80 space-y-1.5">
+                        <div class="flex items-start gap-1.5">
+                            <i class="fa-solid fa-circle-info text-pink-400 text-[10px] mt-0.5"></i>
+                            <span><b>Eligibility:</b> Open to all Telegram subscribers. 1 voucher per user account.</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <i class="fa-solid fa-shield-halved text-amber-400 text-[10px] mt-0.5"></i>
+                            <span><b>Verification:</b> Submit an unedited, full-screen screenshot of a perfect score (8/8) to claim.</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <i class="fa-solid fa-clock text-indigo-400 text-[10px] mt-0.5"></i>
+                            <span><b>Timer Challenge:</b> You have <b>30 seconds</b> per question!</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <i class="fa-solid fa-hourglass-half text-amber-300 text-[10px] mt-0.5"></i>
+                            <span><b>Expiration:</b> Claimed voucher codes must be redeemed within <b>14 days</b> from the date of issue.</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <i class="fa-solid fa-user-shield text-rose-400 text-[10px] mt-0.5"></i>
+                            <span><b>Anti-Fraud Policy:</b> Any attempt to edit screenshots, duplicate entries via alt accounts, or manipulate quiz results will result in immediate disqualification and forfeiture of the reward. We reserve the right to verify user IDs in the bot back-end prior to issuance.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div>
+                    <button id="btn-start" class="w-full max-w-xs py-4 px-8 rounded-2xl font-heading text-lg bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white shadow-xl shadow-purple-600/40 transform transition hover:-translate-y-1 active:translate-y-0 flex items-center justify-center space-x-3 mx-auto">
+                        <span>Launch Mission</span>
+                        <i class="fa-solid fa-rocket"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= SCREEN 2: GAMEPLAY QUIZ ================= -->
+            <section id="screen-quiz" class="hidden space-y-6">
+                <div class="flex items-center justify-between bg-purple-950/60 px-4 py-2 rounded-xl border border-purple-500/30">
+                    <div class="flex items-center space-x-2 text-xs font-semibold text-purple-300">
+                        <i class="fa-solid fa-clock text-pink-400 animate-pulse"></i>
+                        <span>Time Remaining:</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span id="timer-text" class="text-sm font-extrabold text-amber-300 font-mono">30s</span>
+                    </div>
+                </div>
+                <!-- Timer Bar Progress Visual -->
+                <div class="w-full bg-purple-950/80 h-2 rounded-full overflow-hidden border border-purple-500/30 -mt-3">
+                    <div id="timer-progress" class="bg-gradient-to-r from-pink-500 via-purple-500 to-amber-400 h-full w-full transition-all duration-1000 linear"></div>
+                </div>
+
+                <!-- Planet Indicator & Astro Dialogue Header -->
+                <div class="flex items-start space-x-4 bg-purple-950/40 p-4 rounded-2xl border border-purple-500/20">
+                    <!-- Dynamic Astronaut Avatar Face -->
+                    <div class="w-16 h-16 flex-shrink-0 relative">
+                        <svg id="astro-face-svg" viewBox="0 0 100 100" class="w-full h-full">
+                            <circle cx="50" cy="50" r="45" fill="#1e1b4b" stroke="#818cf8" stroke-width="3"/>
+                            <!-- Visor -->
+                            <path d="M 20 40 Q 50 20 80 40 Q 70 80 20 40" fill="rgba(236,72,153,0.3)"/>
+                            <!-- Eyes -->
+                            <circle cx="38" cy="48" r="4" fill="#ffffff"/>
+                            <circle cx="62" cy="48" r="4" fill="#ffffff"/>
+                            <circle cx="39" cy="47" r="1.5" fill="#000000"/>
+                            <circle cx="63" cy="47" r="1.5" fill="#000000"/>
+                            <!-- Smile (Dynamic in JS) -->
+                            <path id="astro-mouth" d="M 42 62 Q 50 68 58 62" stroke="#ffffff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+
+                    <!-- Astro Bubble Dialogue -->
+                    <div class="flex-grow">
+                        <div class="flex items-center justify-between mb-1">
+                            <span id="planet-tag" class="text-xs font-bold text-pink-400 uppercase tracking-wider">
+                                🪐 Planet Citrusia (Level 1)
+                            </span>
+                            <span id="difficulty-badge" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                                Basic
+                            </span>
+                        </div>
+                        <p id="astro-dialogue" class="text-xs md:text-sm text-purple-200 italic leading-snug">
+                            "Sensors active! My helmet detects fresh citrus aroma molecules floating in orbit..."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Question Title Block -->
+                <div>
+                    <h3 id="question-text" class="text-lg md:text-xl font-bold text-white leading-relaxed">
+                        Loading question...
+                    </h3>
+                </div>
+
+                <!-- Options List -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Dynamically generated in JS -->
+                </div>
+
+                <!-- Interactive Explanation Drawer (Hidden until answered) -->
+                <div id="explanation-box" class="hidden p-4 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 text-xs md:text-sm text-purple-200 leading-relaxed transition-all">
+                    <div class="flex items-center space-x-2 text-amber-300 font-bold mb-1">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Astro-Nose Log Book:</span>
+                    </div>
+                    <p id="explanation-text">Explanation goes here.</p>
+                </div>
+
+                <!-- Next Level / Continue Button -->
+                <button id="btn-next" class="hidden w-full py-3.5 px-6 rounded-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-600/30 transition items-center justify-center space-x-2">
+                    <span>Warp to Next Planet</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </section>
+
+            <!-- ================= SCREEN 3: MISSION COMPLETE / VICTORY ================= -->
+            <section id="screen-result" class="hidden text-center space-y-6">
+                <!-- Trophy / Crown Astronaut SVG -->
+                <div class="w-32 h-32 mx-auto relative animate-glow">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="45" fill="#312e81" stroke="#ec4899" stroke-width="3"/>
+                        <!-- Crown on top -->
+                        <path d="M 30 25 L 38 35 L 50 20 L 62 35 L 70 25 L 65 42 L 35 42 Z" fill="#fbbf24"/>
+                        <!-- Happy Visor -->
+                        <circle cx="38" cy="55" r="5" fill="#ffffff"/>
+                        <circle cx="62" cy="55" r="5" fill="#ffffff"/>
+                        <path d="M 38 68 Q 50 80 62 68" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <h2 id="result-title" class="text-3xl font-extrabold font-heading text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-pink-300 to-purple-300">
+                        Mission Accomplished!
+                    </h2>
+                    <p id="result-subtitle" class="text-sm text-purple-200 mt-2 max-w-sm mx-auto">
+                        You have successfully reconstructed the Cosmic Perfume Crystal!
+                    </p>
+                </div>
+
+                <!-- Score Board Box -->
+                <div class="glass-card rounded-2xl p-4 max-w-xs mx-auto border border-purple-500/30">
+                    <div class="text-xs text-purple-300 uppercase font-semibold">Final Scent IQ Score</div>
+                    <div class="text-4xl font-extrabold text-amber-300 my-1 font-heading" id="final-score-val">
+                        8 / 8
+                    </div>
+                    <div class="text-xs text-emerald-400 font-medium" id="accuracy-percent">
+                        100% Accuracy - Master Nose Grade
+                    </div>
+                </div>
+
+                <!-- Reward Banner / Code Box -->
+                <div id="voucher-box" class="hidden bg-gradient-to-r from-amber-500/20 to-purple-600/20 border-2 border-dashed border-amber-400/60 rounded-2xl p-4 max-w-md mx-auto space-y-2">
+                    <div class="text-xs font-bold text-amber-300 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-ticket"></i> Your 5% Off Reward Voucher
+                    </div>
+                    <div class="flex items-center justify-center space-x-2">
+                        <span id="voucher-code" class="text-2xl font-extrabold text-white tracking-widest bg-purple-950/80 px-4 py-1.5 rounded-xl border border-purple-500/40 font-mono">
+                            ASTROSCENT5
+                        </span>
+                        <button id="btn-copy" class="p-2.5 bg-amber-400 text-purple-950 font-bold rounded-xl hover:bg-amber-300 transition" title="Copy Voucher">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-purple-200/90 leading-snug">
+                        📸 <b>Verification Required:</b> Take an unedited, full-screen screenshot showing your perfect score (8/8) on this screen & DM our Telegram Admin! (1 redemption per Telegram account. Redeem within 14 days; anti-fraud verification applies).
+                    </p>
+                </div>
+
+                <!-- Retry / Share Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xs mx-auto">
+                    <button id="btn-restart" class="w-full py-3 px-6 rounded-xl font-bold bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-500/30 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Play Again</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        const quizBank = [
+            // LEVEL 1: Planet Citrusia (Basic)
+            [
+                {
+                    level: 1,
+                    planet: "Planet Citrusia",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Sensors active! My helmet detects fresh citrus aroma molecules in top notes...",
+                    question: "What does EDP stand for on a perfume bottle?",
+                    options: ["Eau de Parfum", "Eau de Sillage", "Essence de Parfum", "Eau de Scent"],
+                    correct: 0,
+                    explanation: "EDP stands for Eau de Parfum! It typically features a 15–20% perfume oil concentration for rich longevity."
+                },
+                {
+                    level: 1,
+                    planet: "Planet Citrusia",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Opening outer solar hatch! What is this trail of scent following behind us?",
+                    question: "What does the perfume term 'Sillage' mean?",
+                    options: ["The invisible scent trail left behind by a wearer", "The bottle cap design", "The alcohol concentration level", "The expiration date of perfume"],
+                    correct: 0,
+                    explanation: "Sillage (pronounced see-yahzh) is the aroma trail left behind by someone wearing fragrance as they walk by!"
+                },
+                {
+                    level: 1,
+                    planet: "Planet Citrusia",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Calibrating wrist sensors! Where should space cadets spray their fragrance?",
+                    question: "Which body areas are best for spraying perfume to maximize warmth and projection?",
+                    options: ["Pulse points like wrists and neck", "On shoes and socks", "Hair ends only", "Inside winter gloves"],
+                    correct: 0,
+                    explanation: "Pulse points (wrists, neck, behind ears) radiate body heat, helping natural perfume oils diffuse into the air."
+                },
+                {
+                    level: 1,
+                    planet: "Planet Citrusia",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Zesty solar flare incoming! This citrus note is the cornerstone of classic Colognes...",
+                    question: "Which sun-ripened citrus fruit provides the signature elegant top note in classic Eau de Colognes?",
+                    options: ["Bergamot", "Durian", "Coconut", "Sweet Apple"],
+                    correct: 0,
+                    explanation: "Bergamot is prized by perfumers worldwide for its bright, complex, tea-like bitter-fresh citrus aroma."
+                }
+            ],
+            // LEVEL 2: Nebula Gourmand (Basic-Intermediate)
+            [
+                {
+                    level: 2,
+                    planet: "Nebula Gourmand",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Whoa! Entering a warm sweet cloud! Smells like cozy desserts in deep space...",
+                    question: "Which note is famous for adding a sweet, creamy, and cozy vibe to gourmand fragrances?",
+                    options: ["Vanilla", "Vetiver", "Bergamot", "Oakmoss"],
+                    correct: 0,
+                    explanation: "Vanilla is the undisputed queen of gourmand perfumery, delivering irresistible warmth, sweetness, and comfort."
+                },
+                {
+                    level: 2,
+                    planet: "Nebula Gourmand",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Scanner alert! We detected a new variation of a famous perfume line in orbit!",
+                    question: "In the perfume industry, what is a 'Flanker'?",
+                    options: ["A spin-off fragrance variation derived from a flagship original", "A broken bottle nozzle", "A fake counterfeit perfume", "A miniature 2ml sample vial"],
+                    correct: 0,
+                    explanation: "A Flanker is a new variation (like 'EDP Intense' or 'Aqua') launched under an existing popular fragrance name."
+                },
+                {
+                    level: 2,
+                    planet: "Nebula Gourmand",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Sensors picking up coffee, praline, and roasted tonka bean signals!",
+                    question: "Fragrances that feature edible, sweet dessert-like notes belong to which scent family?",
+                    options: ["Gourmand", "Aquatic", "Green / Herbal", "Fougère"],
+                    correct: 0,
+                    explanation: "Gourmand fragrances revolve around delicious edible notes like chocolate, caramel, coffee, vanilla, and nuts."
+                },
+                {
+                    level: 2,
+                    planet: "Nebula Gourmand",
+                    difficulty: "Basic",
+                    difficultyColor: "emerald",
+                    astroIntro: "Wait a few hours after spraying! The aroma is evolving on the astronaut suit...",
+                    question: "What is the 'Dry-down' phase of a fragrance?",
+                    options: ["The final lingering base note stage after top & heart notes fade", "Washing perfume off with water", "Drying perfume under a heat lamp", "The alcohol evaporating in the first 5 seconds"],
+                    correct: 0,
+                    explanation: "The dry-down is the final, longest-lasting phase where heavy base notes (vanilla, woods, musks) remain on skin."
+                }
+            ],
+            // LEVEL 3: Floral Galaxias (Intermediate)
+            [
+                {
+                    level: 3,
+                    planet: "Floral Galaxias",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "Blooming space flora detected! The heart of perfume accords lies ahead...",
+                    question: "In fragrance structure, which stage forms the main core character after top notes fade?",
+                    options: ["Heart / Middle Notes", "Base Notes", "Top Notes", "Alcohol Solvents"],
+                    correct: 0,
+                    explanation: "Heart (or Middle) notes emerge as top notes evaporate, giving a fragrance its core floral or spicy personality."
+                },
+                {
+                    level: 3,
+                    planet: "Floral Galaxias",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "A delicate pink nebular haze! Known as the 'Queen of Flowers' in perfumery...",
+                    question: "Which flower, commonly sourced from Grasse or Damascus, is prized as the ultimate floral centerpiece?",
+                    options: ["Rose", "Dandelion", "Sunflower", "Marigold"],
+                    correct: 0,
+                    explanation: "Rose oil and absolute (especially Damask Rose and Centifolia) are timeless foundations of fine perfumery."
+                },
+                {
+                    level: 3,
+                    planet: "Floral Galaxias",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "Intense white floral energy ahead! Smells rich, narcotic, and slightly animalic...",
+                    question: "Which white floral note is famous for its heady, creamy, and opulent night-blooming fragrance?",
+                    options: ["Tuberose", "Eucalyptus", "Pine Needle", "Lemongrass"],
+                    correct: 0,
+                    explanation: "Tuberose is renowned for its luscious, creamy, intoxicating white floral profile used in luxury scents."
+                }
+            ],
+            // LEVEL 4: Chypre Orbit (Intermediate-Advanced)
+            [
+                {
+                    level: 4,
+                    planet: "Chypre Orbit",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "Navigating asteroid fields! This ancient space ring relies on a legendary classic balance...",
+                    question: "Which iconic fragrance profile relies on a citrus top note paired with Labdanum and Oakmoss in the base?",
+                    options: ["Chypre", "Fougère", "Gourmand", "Aquatic"],
+                    correct: 0,
+                    explanation: "The classic Chypre family (pioneered by Coty in 1917) builds its signature contrast between a citrus top note and a mossy, resinous base."
+                },
+                {
+                    level: 4,
+                    planet: "Chypre Orbit",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "Radiant floral radiance detected! This transparent jasmine-like synthetic molecule illuminates formulas...",
+                    question: "Which famous synthetic molecule provides transparent, glowing floral radiance reminiscent of fresh jasmine blossoms?",
+                    options: ["Hedione", "Eugenol", "Isobutane", "Menthol"],
+                    correct: 0,
+                    explanation: "Hedione (Methyl Dihydrojasmonate), introduced by Firmenich, adds an airy, glowing, floral radiance to perfumes like Eau Sauvage."
+                },
+                {
+                    level: 4,
+                    planet: "Chypre Orbit",
+                    difficulty: "Intermediate",
+                    difficultyColor: "blue",
+                    astroIntro: "Deep night-blooming space flowers ahead! Smells rich, narcotic, and slightly animalic...",
+                    question: "Certain white flowers like Jasmine and Tuberose possess a rich, hypnotic nuance caused by which organic compound?",
+                    options: ["Indole", "Lactose", "Citral", "Salicylic Acid"],
+                    correct: 0,
+                    explanation: "Indole gives white florals their intoxicating, sensual, and slightly animalic depth that perfumers adore."
+                }
+            ],
+            // LEVEL 5: Fougère Frontier (Advanced)
+            [
+                {
+                    level: 5,
+                    planet: "Fougère Frontier",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Barbershop space station ahead! Detecting lavender, coumarin, and oakmoss accords...",
+                    question: "Which classic masculine fragrance family is named after the French word for 'Fern'?",
+                    options: ["Fougère", "Chypre", "Amber", "Citrus"],
+                    correct: 0,
+                    explanation: "Fougère (meaning fern) typically combines lavender, coumarin (tonka), and oakmoss for a clean, barbershop feel."
+                },
+                {
+                    level: 5,
+                    planet: "Fougère Frontier",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Fresh lavender waves washing over the ship hull!",
+                    question: "Which aromatic plant note gives Fougère fragrances their clean, herbaceous opening impression?",
+                    options: ["Lavender", "Cinnamon", "Vanilla", "Chocolate"],
+                    correct: 0,
+                    explanation: "Lavender provides the iconic fresh, aromatic herbal top note characteristic of classic Fougère fragrances."
+                },
+                {
+                    level: 5,
+                    planet: "Fougère Frontier",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Detecting tonka bean crystal dust floating in space currents!",
+                    question: "What organic compound derived from Tonka Beans gives a warm, sweet, hay-like aroma in Fougère blends?",
+                    options: ["Coumarin", "Limonene", "Menthol", "Geraniol"],
+                    correct: 0,
+                    explanation: "Coumarin is a key molecule in perfumery, famous for its sweet woodruff and freshly mown hay aroma."
+                }
+            ],
+            // LEVEL 6: Aquatic Abyssal (Advanced-Expert)
+            [
+                {
+                    level: 6,
+                    planet: "Aquatic Abyssal",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Entering 1990s retro space waters! Sea breeze and melon aroma detected...",
+                    question: "Which synthetic aroma chemical created the iconic 1990s aquatic/marine perfume boom (e.g., L'Eau d'Issey)?",
+                    options: ["Calone 1951", "Coumarin", "Vanillin", "Geosmin"],
+                    correct: 0,
+                    explanation: "Calone 1951 introduced a revolutionary watery, salty sea-breeze and fresh watermelon note to modern perfumery."
+                },
+                {
+                    level: 6,
+                    planet: "Aquatic Abyssal",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Cooling misty ocean breeze enveloping the spacecraft!",
+                    question: "Aquatic or Marine fragrances belong to which overarching scent classification?",
+                    options: ["Fresh / Ozonic", "Heavy Amber", "Gourmand", "Warm Leather"],
+                    correct: 0,
+                    explanation: "Aquatic and Marine fragrances fall under the Fresh/Ozonic umbrella, mimicking fresh sea air and clear water."
+                },
+                {
+                    level: 6,
+                    planet: "Aquatic Abyssal",
+                    difficulty: "Advanced",
+                    difficultyColor: "amber",
+                    astroIntro: "Smells like rain hitting dry cosmic earth after a long drought!",
+                    question: "What is the name of the earthy, fresh smell produced when rain falls on dry soil or rock?",
+                    options: ["Petrichor", "Sillage", "Soliflore", "Enfleurage"],
+                    correct: 0,
+                    explanation: "Petrichor is the pleasant earthy scent produced when rain falls on dry ground, often simulated with Geosmin."
+                }
+            ],
+            // LEVEL 7: Ambro-Wood Nebula (Expert)
+            [
+                {
+                    level: 7,
+                    planet: "Ambro-Wood Nebula",
+                    difficulty: "Expert",
+                    difficultyColor: "purple",
+                    astroIntro: "Warning! Extreme radiation & diffusion levels detected from high-potency synthetic molecules...",
+                    question: "Which high-impact synthetic molecule provides extreme projection & a dry amber-woody trail in modern niche hits?",
+                    options: ["Ambrocenide", "Eugenol", "Calone 1951", "Linalool"],
+                    correct: 0,
+                    explanation: "Ambrocenide is a modern high-potency molecule celebrated for delivering nuclear diffusion, longevity, and dry radiator-wood warmth."
+                },
+                {
+                    level: 7,
+                    planet: "Ambro-Wood Nebula",
+                    difficulty: "Expert",
+                    difficultyColor: "purple",
+                    astroIntro: "Velvet woody cosmic dust cloud! You smell it, then it disappears, then comes back strong!",
+                    question: "Iso E Super is famous for which unique sensory characteristic in modern perfumery?",
+                    options: ["A smooth cedar-velvet woodiness with an elusive 'now-you-smell-it, now-you-don't' effect", "A heavy rotten fruit stench", "Extremely sour lemon tartness", "Pure peppermint cooling sensation"],
+                    correct: 0,
+                    explanation: "Iso E Super creates a velvety, subtle woody aura that plays hide-and-seek with the wearer's olfactory receptors!"
+                },
+                {
+                    level: 7,
+                    planet: "Ambro-Wood Nebula",
+                    difficulty: "Expert",
+                    difficultyColor: "purple",
+                    astroIntro: "Floating ocean mystery! This rare natural treasure was historically vomited by sperm whales...",
+                    question: "Natural Ambergris—treasured for its salty, velvety warm skin scent—originates from where?",
+                    options: ["Secretions in the digestive tract of sperm whales", "Fossilized tree sap from ancient pine forests", "Distilled deep-sea volcanic mineral rocks", "Crushed shells of giant sea turtles"],
+                    correct: 0,
+                    explanation: "Ambergris is produced in sperm whale digestive systems to protect against squid beaks, floating on oceans for years to cure!"
+                }
+            ],
+            // LEVEL 8: Oud Star Core (Pro)
+            [
+                {
+                    level: 8,
+                    planet: "Oud Star Core",
+                    difficulty: "Pro",
+                    difficultyColor: "rose",
+                    astroIntro: "We made it to the core! Here lies the rarest dark resin in the entire galaxy...",
+                    question: "Real Oud (Agarwood) resin forms in Aquilaria trees only under which natural condition?",
+                    options: [
+                        "When the tree naturally reacts to a specific mold infection",
+                        "From harvesting fresh spring tree sap during full moons",
+                        "By soaking the bark in botanical aromatic oils",
+                        "From drying flowers under intense star sunlight"
+                    ],
+                    correct: 0,
+                    explanation: "Authentic Agarwood resin forms as a defense mechanism when the tree is infected by Phaeoacremonium parasitica mold!"
+                },
+                {
+                    level: 8,
+                    planet: "Oud Star Core",
+                    difficulty: "Pro",
+                    difficultyColor: "rose",
+                    astroIntro: "Ultra-luxury vault unlocked! This liquid gold costs up to $50,000 per kilogram...",
+                    question: "Orris Butter (derived from Iris plant roots) is exceptionally expensive primarily because of what?",
+                    options: [
+                        "Rhizomes must be aged for 3+ years before steam distillation",
+                        "The plants only grow on top of Mount Everest",
+                        "Flowers must be picked by gold scissors at midnight",
+                        "It requires synthetic nuclear reactors to synthesize"
+                    ],
+                    correct: 0,
+                    explanation: "Orris root requires 3 years of growth plus 3 full years of dry aging to develop precious irone aroma compounds!"
+                },
+                {
+                    level: 8,
+                    planet: "Oud Star Core",
+                    difficulty: "Pro",
+                    difficultyColor: "rose",
+                    astroIntro: "Ancient perfumery vault detected! Cold fat absorbing flower essences...",
+                    question: "What is 'Enfleurage', the historic artisan extraction technique?",
+                    options: [
+                        "Using odorless animal fat to absorb delicate floral essential oils from live petals",
+                        "Boiling flowers in high-pressure volcanic acid",
+                        "Freezing flower petals in liquid nitrogen",
+                        "Crushing roots with iron hammers"
+                    ],
+                    correct: 0,
+                    explanation: "Enfleurage is a historic French method using cold odorless fats to capture delicate scents from flowers like Jasmine and Tuberose."
+                },
+                {
+                    level: 8,
+                    planet: "Oud Star Core",
+                    difficulty: "Pro",
+                    difficultyColor: "rose",
+                    astroIntro: "Safety protocol check! This international fragrance authority regulates safe ingredient usage...",
+                    question: "What does IFRA stand for in the global fragrance industry?",
+                    options: [
+                        "International Fragrance Association",
+                        "Imperial Formulators Royal Agency",
+                        "Interstellar Floral Research Alliance",
+                        "Industrial Fragrance & Resin Association"
+                    ],
+                    correct: 0,
+                    explanation: "IFRA (International Fragrance Association) sets global safety standards and usage limits for perfume ingredients."
+                }
+            ]
+        ];
+
+        let usedQuestionsPerLevel = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] };
+        let quizData = [];
+        let currentStep = 0;
+        let score = 0;
+        let userAnswers = [];
+
+        let questionTimer = null;
+        let timeLeft = 30;
+        const TIMER_DURATION = 30;
+
+        const timerText = document.getElementById('timer-text');
+        const timerProgress = document.getElementById('timer-progress');
+
+        function startQuestionTimer() {
+            stopQuestionTimer();
+            timeLeft = TIMER_DURATION;
+            updateTimerUI();
+
+            questionTimer = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+
+                if (timeLeft <= 0) {
+                    stopQuestionTimer();
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function stopQuestionTimer() {
+            if (questionTimer) {
+                clearInterval(questionTimer);
+                questionTimer = null;
+            }
+        }
+
+        function updateTimerUI() {
+            if (timerText) timerText.innerText = `${timeLeft}s`;
+            if (timerProgress) {
+                const percentage = Math.max(0, (timeLeft / TIMER_DURATION) * 100);
+                timerProgress.style.width = `${percentage}%`;
+                if (timeLeft <= 5) {
+                    timerProgress.className = "bg-rose-500 h-full transition-all duration-1000 linear animate-pulse";
+                    if (timerText) timerText.className = "text-sm font-extrabold text-rose-400 font-mono animate-ping";
+                } else {
+                    timerProgress.className = "bg-gradient-to-r from-pink-500 via-purple-500 to-amber-400 h-full transition-all duration-1000 linear";
+                    if (timerText) timerText.className = "text-sm font-extrabold text-amber-300 font-mono";
+                }
+            }
+        }
+
+        function handleTimeOut() {
+            const q = quizData[currentStep];
+            const allBtns = optionsContainer.querySelectorAll('button');
+
+            allBtns.forEach(btn => btn.disabled = true);
+            userAnswers.push(false);
+            playSound('wrong');
+
+            // Highlight correct option
+            const correctBtn = allBtns[q.correct];
+            if (correctBtn) {
+                correctBtn.className = `w-full p-4 rounded-2xl text-left text-sm md:text-base text-emerald-100 bg-emerald-950/50 border border-emerald-400/60 flex items-center justify-between`;
+            }
+
+            // Astro Surprised Expression
+            astroMouth.setAttribute('d', 'M 42 66 Q 50 60 58 66');
+            astroDialogue.innerText = `"Time's up! Solar flare interference blew past before we could answer!"`;
+
+            // Show explanation & Next Button
+            explanationText.innerText = `⏱️ Time limit reached (30s)! ${q.explanation}`;
+            explanationBox.classList.remove('hidden');
+            btnNext.classList.remove('hidden');
+            btnNext.classList.add('flex');
+        }
+
+        function generateUniqueQuizSet() {
+            quizData = [];
+            for (let levelIdx = 0; levelIdx < quizBank.length; levelIdx++) {
+                const levelPool = quizBank[levelIdx];
+                let used = usedQuestionsPerLevel[levelIdx] || [];
+
+                if (used.length >= levelPool.length) {
+                    usedQuestionsPerLevel[levelIdx] = [];
+                    used = usedQuestionsPerLevel[levelIdx];
+                }
+
+                const availableIndices = [];
+                for (let i = 0; i < levelPool.length; i++) {
+                    if (!used.includes(i)) {
+                        availableIndices.push(i);
+                    }
+                }
+
+                const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                if (!usedQuestionsPerLevel[levelIdx]) usedQuestionsPerLevel[levelIdx] = [];
+                usedQuestionsPerLevel[levelIdx].push(randomIndex);
+
+                const origQ = levelPool[randomIndex];
+                const optionsWithFlag = origQ.options.map((opt, i) => ({
+                    text: opt,
+                    isCorrect: i === origQ.correct
+                }));
+
+                for (let i = optionsWithFlag.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [optionsWithFlag[i], optionsWithFlag[j]] = [optionsWithFlag[j], optionsWithFlag[i]];
+                }
+
+                const newCorrectIdx = optionsWithFlag.findIndex(o => o.isCorrect);
+
+                quizData.push({
+                    ...origQ,
+                    options: optionsWithFlag.map(o => o.text),
+                    correct: newCorrectIdx
+                });
+            }
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'victory') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.15);
+                osc.frequency.setValueAtTime(659.25, now + 0.3);
+                osc.frequency.setValueAtTime(880, now + 0.45);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                osc.start(now);
+                osc.stop(now + 0.8);
+            }
+        }
+
+        const screenIntro = document.getElementById('screen-intro');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenResult = document.getElementById('screen-result');
+        const statusBar = document.getElementById('status-bar');
+
+        const btnStart = document.getElementById('btn-start');
+        const btnNext = document.getElementById('btn-next');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnCopy = document.getElementById('btn-copy');
+
+        const scoreText = document.getElementById('score-text');
+        const rankBadge = document.getElementById('rank-badge');
+
+        const planetTag = document.getElementById('planet-tag');
+        const diffBadge = document.getElementById('difficulty-badge');
+        const astroDialogue = document.getElementById('astro-dialogue');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationText = document.getElementById('explanation-text');
+        const astroMouth = document.getElementById('astro-mouth');
+
+        btnStart.addEventListener('click', () => {
+            playSound('click');
+            startMission();
+        });
+
+        btnNext.addEventListener('click', () => {
+            playSound('click');
+            currentStep++;
+            if (currentStep < quizData.length) {
+                renderQuestion();
+            } else {
+                finishMission();
+            }
+        });
+
+        btnRestart.addEventListener('click', () => {
+            playSound('click');
+            startMission();
+        });
+
+        btnCopy.addEventListener('click', () => {
+            playSound('click');
+            const voucher = document.getElementById('voucher-code').innerText;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(voucher);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = voucher;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            btnCopy.innerHTML = `<i class="fa-solid fa-check"></i>`;
+            setTimeout(() => {
+                btnCopy.innerHTML = `<i class="fa-solid fa-copy"></i>`;
+            }, 2000);
+        });
+
+        function startMission() {
+            stopQuestionTimer();
+            generateUniqueQuizSet();
+
+            currentStep = 0;
+            score = 0;
+            userAnswers = [];
+            scoreText.innerText = '0';
+            rankBadge.innerText = 'Cadet';
+
+            screenIntro.classList.add('hidden');
+            screenResult.classList.add('hidden');
+            screenQuiz.classList.remove('hidden');
+            statusBar.classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentStep];
+
+            explanationBox.classList.add('hidden');
+            btnNext.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+
+            planetTag.innerText = `🪐 ${q.planet} (${q.level}/${quizData.length})`;
+            diffBadge.innerText = q.difficulty;
+            astroDialogue.innerText = `"${q.astroIntro}"`;
+            questionText.innerText = q.question;
+
+            astroMouth.setAttribute('d', 'M 42 62 Q 50 68 58 62');
+
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = `glass-btn w-full p-4 rounded-2xl text-left text-sm md:text-base text-purple-100 flex items-center justify-between group`;
+                btn.innerHTML = `
+                    <span class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-xl bg-purple-900/60 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300 group-hover:border-pink-400 group-hover:text-pink-300">
+                            ${String.fromCharCode(65 + index)}
+                        </span>
+                        <span>${optText}</span>
+                    </span>
+                    <i class="fa-regular fa-circle text-purple-400/50 group-hover:text-pink-400"></i>
+                `;
+
+                btn.addEventListener('click', () => handleAnswer(index, btn));
+                optionsContainer.appendChild(btn);
+            });
+
+            startQuestionTimer();
+        }
+
+        function handleAnswer(selectedIndex, selectedBtn) {
+            stopQuestionTimer();
+            const q = quizData[currentStep];
+            const allBtns = optionsContainer.querySelectorAll('button');
+
+            allBtns.forEach(btn => btn.disabled = true);
+
+            const isCorrect = selectedIndex === q.correct;
+            userAnswers.push(isCorrect);
+
+            if (isCorrect) {
+                score++;
+                scoreText.innerText = score;
+                playSound('correct');
+
+                selectedBtn.className = `w-full p-4 rounded-2xl text-left text-sm md:text-base text-emerald-100 bg-emerald-950/80 border-2 border-emerald-400 flex items-center justify-between shadow-lg shadow-emerald-500/20`;
+                selectedBtn.querySelector('i').className = `fa-solid fa-circle-check text-emerald-400 text-lg`;
+
+                astroMouth.setAttribute('d', 'M 38 58 Q 50 72 62 58');
+                astroDialogue.innerText = `"Bingo! That's correct, space nose!"`;
+
+            } else {
+                playSound('wrong');
+
+                selectedBtn.className = `w-full p-4 rounded-2xl text-left text-sm md:text-base text-rose-100 bg-rose-950/80 border-2 border-rose-500 flex items-center justify-between shadow-lg shadow-rose-500/20`;
+                selectedBtn.querySelector('i').className = `fa-solid fa-circle-xmark text-rose-400 text-lg`;
+
+                const correctBtn = allBtns[q.correct];
+                correctBtn.className = `w-full p-4 rounded-2xl text-left text-sm md:text-base text-emerald-100 bg-emerald-950/50 border border-emerald-400/60 flex items-center justify-between`;
+
+                astroMouth.setAttribute('d', 'M 42 66 Q 50 60 58 66');
+                astroDialogue.innerText = `"Ouch! Cosmic interference detected! Here's what my logbook says..."`;
+            }
+
+            if (score >= 7) rankBadge.innerText = 'Master Nose';
+            else if (score >= 4) rankBadge.innerText = 'Perfumer';
+
+            explanationText.innerText = q.explanation;
+            explanationBox.classList.remove('hidden');
+            btnNext.classList.remove('hidden');
+            btnNext.classList.add('flex');
+        }
+
+        function finishMission() {
+            stopQuestionTimer();
+            playSound('victory');
+
+            screenQuiz.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+
+            document.getElementById('final-score-val').innerText = `${score} / ${quizData.length}`;
+            
+            const accuracy = Math.round((score / quizData.length) * 100);
+            document.getElementById('accuracy-percent').innerText = `${accuracy}% Accuracy - ${score === quizData.length ? 'Grand Master Perfumer Grade' : 'Explorer Grade'}`;
+
+            const resultTitle = document.getElementById('result-title');
+            const resultSubtitle = document.getElementById('result-subtitle');
+            const voucherBox = document.getElementById('voucher-box');
+
+            if (score === quizData.length) {
+                resultTitle.innerText = "🏆 Cosmic Nose Master!";
+                resultSubtitle.innerText = "Incredible! You unlocked 100% of the Scent Crystals and synthesized the Star Fragrance!";
+                voucherBox.classList.remove('hidden');
+            } else {
+                resultTitle.innerText = "Mission Complete!";
+                resultSubtitle.innerText = `You scored ${score}/${quizData.length}! Re-try the mission to get ${quizData.length}/${quizData.length} and unlock your 5% discount voucher!`;
+                voucherBox.classList.add('hidden');
+            }
+        }
+
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 3000);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.01 + 0.005
+                });
+            }
+        }
+
+        function renderStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(renderStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = () => {
+            resizeCanvas();
+            renderStars();
+        };
+    </script>
+</body>
+</html>
